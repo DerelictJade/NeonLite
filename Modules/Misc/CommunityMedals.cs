@@ -26,7 +26,8 @@ namespace NeonLite.Modules
         public static Dictionary<string, long[]> medalTimes = [];
 
         const string filename = "communitymedals.json";
-        const string URL = "https://raw.githubusercontent.com/Faustas156/NeonLite/main/Resources/communitymedals.json";
+        const string URL = "https://raw.githubusercontent.com/DerelictJade/NeonLite/main/Resources/communitymedals.json";
+        
 
         // All stamps (null for bronze/silver/gold/ace)
         public static Sprite[] Stamps { get; private set; }
