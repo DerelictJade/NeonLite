@@ -491,7 +491,7 @@ namespace NeonLite.Modules
             if (medalEarned < I(MedalEnum.Dev))
                 return;
 
-            __instance._medal.sprite = Medals[Math.Min(medalEarned, I(MedalEnum.Sapphire))];
+            __instance._medal.sprite = Medals[medalEarned];
             __instance._imageLoreBacking.enabled = !ld.isSidequest;
 
             if (ld.isSidequest)
