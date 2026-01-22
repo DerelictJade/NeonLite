@@ -45,7 +45,8 @@ namespace NeonLite.Modules
             new(0.388f, 0.8f, 0.388f),
             new(0.674f, 0.313f, 0.913f),
             new(0.043f, 0.317f, 0.901f),
-            new(0.976f, 0.341f, 0f) // todo: TODO: todo: CHANGE IF WE DECIDE TO IMPLEMENT IT!!!!!!
+            new(0.976f, 0.341f, 0f), // TOPAZ COLOR
+            new(0.733f, 0.039f, 0.118f) // BLOOD DIAMOND COLOR
         ];
 
         public enum MedalEnum
@@ -58,7 +59,8 @@ namespace NeonLite.Modules
             Emerald,
             Amethyst,
             Sapphire,
-            Plus
+            Topaz,
+            Blud
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -282,6 +284,28 @@ namespace NeonLite.Modules
                 graphic.material = HueShiftMat;
         }
 
+        private static Sprite LoadEmbeddedSprite(string resourceName, Sprite existing)
+        {
+            var asm = Assembly.GetExecutingAssembly();
+
+            using Stream s = asm.GetManifestResourceStream(resourceName);
+            if (s == null)
+                return null;
+
+
+            byte[] bytes = new byte[s.Length];
+            s.Read(bytes, 0, bytes.Length);
+
+            Texture2D tex = new Texture2D(2, 2);
+            tex.LoadImage(bytes);
+
+            return Sprite.Create(
+                tex,
+                new Rect(0, 0, tex.width, tex.height),
+                existing.pivot
+            );
+        }
+
         static void AssetsDone(AssetBundle bundle)
         {
             loaded = true;
@@ -301,7 +325,9 @@ namespace NeonLite.Modules
                 bundle.LoadAsset<Sprite>("Assets/Sprites/MedalEmerald.png"),
                 bundle.LoadAsset<Sprite>("Assets/Sprites/MedalAmethyst.png"),
                 bundle.LoadAsset<Sprite>("Assets/Sprites/MedalSapphire.png"),
-                bundle.LoadAsset<Sprite>("Assets/Sprites/MedalPlus.png"),
+                LoadEmbeddedSprite("NeonLite.Assets.Sprites.MedalTopaz.png", gamedata.medalSprite_Bronze),
+                LoadEmbeddedSprite("NeonLite.Assets.Sprites.MedalBlud.png", gamedata.medalSprite_Bronze),
+
             ];
 
             var levelInfo = ((MenuScreenStaging)MainMenu.Instance()._screenStaging)
@@ -319,7 +345,8 @@ namespace NeonLite.Modules
                 bundle.LoadAsset<Sprite>("Assets/Sprites/MikeyEmerald.png"),
                 bundle.LoadAsset<Sprite>("Assets/Sprites/MikeyAmethyst.png"),
                 bundle.LoadAsset<Sprite>("Assets/Sprites/MikeySapphire.png"),
-                bundle.LoadAsset<Sprite>("Assets/Sprites/MikeyPlus.png"),
+                LoadEmbeddedSprite("NeonLite.Assets.Sprites.MikeyTopaz.png", devStamp),
+                LoadEmbeddedSprite("NeonLite.Assets.Sprites.MikeyBlud.png", devStamp),
             ];
 
             Crystals = [
@@ -331,7 +358,8 @@ namespace NeonLite.Modules
                 bundle.LoadAsset<Sprite>("Assets/Sprites/CrystalEmerald.png"),
                 bundle.LoadAsset<Sprite>("Assets/Sprites/CrystalAmethyst.png"),
                 bundle.LoadAsset<Sprite>("Assets/Sprites/CrystalSapphire.png"),
-                bundle.LoadAsset<Sprite>("Assets/Sprites/CrystalPlus.png"),
+                LoadEmbeddedSprite("NeonLite.Assets.Sprites.CrystalTopaz.png", levelInfo._crystalSpriteSidequestFilled),
+                LoadEmbeddedSprite("NeonLite.Assets.Sprites.CrystalBlud.png", levelInfo._crystalSpriteSidequestFilled),
             ];
 
             HueShiftMat = bundle.LoadAsset<Material>("Assets/Material/HueShift.mat");
@@ -471,10 +499,16 @@ namespace NeonLite.Modules
                     Helpers.FormatTime(communityTimes[I(MedalEnum.Emerald)] / 1000, true, '.', true),
                     medalEarned >= (int)MedalEnum.Emerald]);
 
-                if (medalEarned >= (int)MedalEnum.Plus)
+                if (medalEarned >= (int)MedalEnum.Blud)
                 {
                     __instance.devStamp.SetActive(true);
-                    __instance.devTime.text = Helpers.FormatTime(communityTimes[I(MedalEnum.Plus)] / 1000, true, '.', true);
+                    __instance.devTime.text = Helpers.FormatTime(communityTimes[I(MedalEnum.Blud)] / 1000, true, '.', true);
+                    __instance.devTime.color = AdjustedColor(Colors[medalEarned]);
+                }
+                else if (medalEarned >= (int)MedalEnum.Topaz)
+                {
+                    __instance.devStamp.SetActive(true);
+                    __instance.devTime.text = Helpers.FormatTime(communityTimes[I(MedalEnum.Topaz)] / 1000, true, '.', true);
                     __instance.devTime.color = AdjustedColor(Colors[medalEarned]);
                 }
                 else
@@ -601,7 +635,7 @@ namespace NeonLite.Modules
             }
             else if (modded >= I(MedalEnum.Emerald))
                 __instance._insightEarned_Localized.SetKey("NeonLite/RESULTS_MEDAL_MODDED_INSIGHT");
-            if (modded <= I(MedalEnum.Dev) || modded == I(MedalEnum.Plus)) // don't do anything else on dev and under
+            if (modded <= I(MedalEnum.Dev) || modded >= I(MedalEnum.Topaz)) // don't do anything else on dev and under
                 return;
 
             string locKey = E(modded) switch
