@@ -42,6 +42,7 @@ NeonsOnSpeed
 ChapterRush
 FullSync
 RMMBY
+PuppyPowertools
 
 // it's easier to keep this one in here
 UnityExplorer.ML.Mono
