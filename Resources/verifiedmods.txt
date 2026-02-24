@@ -43,6 +43,7 @@ ChapterRush
 FullSync
 RMMBY
 PuppyPowertools
+NeonWhiteRP
 
 // it's easier to keep this one in here
 UnityExplorer.ML.Mono
