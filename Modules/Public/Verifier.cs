@@ -173,10 +173,10 @@ namespace NeonLite.Modules
 
                     if (split.Length > 1)
                     {
-                        if (SemVersion.TryParse(split[1].Trim(), out var version))
-                            verifiedMods.Add(new(split[0].Trim(), version));
+                        if (SemVersion.TryParse(split.Last().Trim(), out var version))
+                            verifiedMods.Add(new(string.Join(" ", split.Take(split.Length - 1)).Trim(), version));
                         else
-                            verifiedMods.Add(new(split[0].Trim(), null));
+                            verifiedMods.Add(new(line.Trim(), null));
                     }
                     else
                         verifiedMods.Add(new(line.Trim(), null));
@@ -251,6 +251,7 @@ namespace NeonLite.Modules
 
                         var name = mod.MelonAssembly.Assembly.GetName().Name;
                         var verified = verifiedMods.FirstOrDefault(x => x.name == name);
+                        NeonLite.Logger.DebugMsg($"VERIFY CHECK {name} {verified}");
                         if (verified == null)
                             unknown.Add(name);
                         else if (verified.version != null && verified.version > mod.Info.SemanticVersion)
