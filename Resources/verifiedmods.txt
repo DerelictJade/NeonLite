@@ -1,0 +1,40 @@
+﻿// This is a list of all the currently speedrun.com verified mods.
+// This list is subject to change without notice.
+// If a version is next to a mod, that mod has a minimum version.
+
+NeonLite 3.0.11-b1
+MelonPrefManager.Mono
+EventTracker
+NeonNetwork
+NeonCapture
+GUnJammer
+ChallengeDeck
+InputDisplay
+CustomRush
+TexturedDeck 1.2.2
+ReverseMode
+StreamView
+SuperPotato
+stxticCustoms
+YourStory
+NeonSoundReplacer
+SecretShop
+GiftHunt
+NeonCollate
+HeavenlyLoading
+ListPB
+ResetRushButton
+connie modpack
+
+// The listed mods are not allowed, but correctly handle being enabled/disabled,
+// whether that be via Verifier.SetStatus or CheckVerifiable on a module.
+LocalLine 1.0.1
+
+// these old mods are here for compatibility, let me know if i missed any
+NeonsOnSpeed
+ChapterRush
+FullSync
+RMMBY
+
+// it's easier to keep this one in here
+UnityExplorer.ML.Mono
