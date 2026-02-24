@@ -36,6 +36,7 @@ CustomRushMode
 CustomCardLoadout
 MikeyMode
 MoreRushes
+Hardcore
 
 // these old mods are here for compatibility, let me know if i missed any
 NeonsOnSpeed
