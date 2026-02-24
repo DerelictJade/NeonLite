@@ -25,10 +25,13 @@ HeavenlyLoading
 ListPB
 ResetRushButton
 connie modpack
+connie_modpack
+
 
 // The listed mods are not allowed, but correctly handle being enabled/disabled,
 // whether that be via Verifier.SetStatus or CheckVerifiable on a module.
 LocalLine 1.0.1
+CustomRushMode
 
 // these old mods are here for compatibility, let me know if i missed any
 NeonsOnSpeed
