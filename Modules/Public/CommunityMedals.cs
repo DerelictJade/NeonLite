@@ -91,6 +91,7 @@ namespace NeonLite.Modules
         internal static MelonPreferences_Entry<bool> hideLeaderboard;
         public static MelonPreferences_Entry<float> hueShift;
         internal static MelonPreferences_Entry<string> overrideURL;
+        internal static MelonPreferences_Entry<bool> showSapphPlusInLB;
 
         public static Material HueShiftMat { get; private set; } = null;
         static Material defaultMat;
@@ -103,6 +104,7 @@ namespace NeonLite.Modules
             hideOld = Settings.Add(Settings.h, "Medals", "hideOld", "Hide Times", "Hides unachieved medal times.", false);
             hideLeaderboard = Settings.Add(Settings.h, "Medals", "hideLeaderboard", "Hide Leaderboard Medals", "Unachieved medals will appear the same as your own on the leaderboards.", false);
             overrideURL = Settings.Add(Settings.h, "Medals", "overrideURL", "Extension URL", "Specifies additional community medals JSON URL to apply on top of the existing community medals.", "");
+            showSapphPlusInLB = Settings.Add(Settings.h, "Medals", "showSapphPlusInLB", "Show Sapph+ Medals in LB", "Enable to display medals above sapphre in the level leaderboards and not only in your local time.", false);
 
             active = setting.SetupForModule(Activate, static (_, after) => after);
             hueShift.OnEntryValueChanged.Subscribe(static (_, after) => HueShiftMat?.SetFloat("_Shift", after));
@@ -602,13 +604,19 @@ namespace NeonLite.Modules
 
             if (!levelData.isSidequest)
             {
-                __instance._medal.sprite = Medals[Math.Min(medalEarned, I(MedalEnum.Sapphire))];
+                if (showSapphPlusInLB.Value)
+                    __instance._medal.sprite = Medals[Math.Min(medalEarned, I(MedalEnum.Blud))];
+                else
+                    __instance._medal.sprite = Medals[Math.Min(medalEarned, I(MedalEnum.Sapphire))];
                 __instance._medal.gameObject.SetActive(true);
             }
             else if (medalEarned > (int)MedalEnum.Dev)
             {
                 __instance._medal.preserveAspect = true;
-                __instance._medal.sprite = Crystals[Math.Min(medalEarned, I(MedalEnum.Sapphire))];
+                if (showSapphPlusInLB.Value)
+                    __instance._medal.sprite = Crystals[Math.Min(medalEarned, I(MedalEnum.Blud))];
+                else
+                    __instance._medal.sprite = Crystals[Math.Min(medalEarned, I(MedalEnum.Sapphire))];
                 __instance._medal.gameObject.SetActive(true);
             }
         }
