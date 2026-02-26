@@ -98,7 +98,7 @@ namespace NeonLite.Modules
                     prevVerified = Verified;
                 }
                 else
-                    otherRush.AddRange(other);
+                    otherRush.UnionWith(other);
                 return;
             }
 
@@ -209,11 +209,12 @@ namespace NeonLite.Modules
 
         static readonly List<string> unknown = [];
         static readonly List<(ModInfo, SemVersion)> outdated = [];
-        static readonly List<string> other = [];
-        static readonly List<string> otherRush = [];
+        static readonly HashSet<string> other = [];
+        static readonly HashSet<string> otherRush = [];
 
         static void AddToOther(string s)
         {
+            NeonLite.Logger.BetaMsg($"Unverifiable status added: {s}");
             if (LevelRush.IsLevelRush())
             {
                 var level = LevelRush.GetCurrentLevelRushLevelData();
