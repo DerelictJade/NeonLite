@@ -51,6 +51,7 @@ namespace NeonLite.Modules
 
             Patching.AddPatch(typeof(LevelInfo), "SetLevel", Helpers.HM(VerifyLI).SetPriority(Priority.Last), Patching.PatchTarget.Postfix);
             Patching.AddPatch(typeof(MenuScreenResults), "OnSetVisible", Helpers.HM(VerifyMSR).SetPriority(Priority.Last), Patching.PatchTarget.Postfix);
+            Patching.AddPatch(typeof(MenuScreenLevelRushComplete), "OnSetVisible", Helpers.HM(VerifyMSLR).SetPriority(Priority.Last), Patching.PatchTarget.Postfix);
 
             PastSight.OnActive += OnPastSightActive;
 #if !XBOX
@@ -121,7 +122,7 @@ namespace NeonLite.Modules
         }
 
         static bool wasVerified;
-        static void OnLevelLoad(LevelData level)
+        static void OnLevelLoad(LevelData _)
         {
             wasVerified = Verified;
             if (!fetched)
@@ -480,7 +481,7 @@ namespace NeonLite.Modules
 
 
 #if !XBOX
-        static string OnSteamLBWrite(BinaryWriter writer, SteamLBFiles.LBType type)
+        static string OnSteamLBWrite(BinaryWriter writer, SteamLBFiles.LBType type, bool _)
         {
             if (type == SteamLBFiles.LBType.Global)
                 return null;
@@ -540,6 +541,14 @@ namespace NeonLite.Modules
 
         static void VerifyMSR(MenuScreenResults __instance)
         {
+            if (LevelRush.IsLevelRush())
+            {
+                var nbT = __instance._levelCompleteStatsText;
+                nbT.spriteAsset = SpriteAsset;
+                nbT.text += $" <sprite={(prevVerified ? 1 : 0)} tint>";
+                return;
+            }
+
             LevelData level = NeonLite.Game.GetCurrentLevel();
             if (!level.StatsHasCustom(STATS_KEY))
                 return;
@@ -560,6 +569,12 @@ namespace NeonLite.Modules
                 nbT.spriteAsset = SpriteAsset;
                 nbT.text += $" <sprite={(stats.GetCustom<bool>(STATS_KEY) ? 1 : 0)} tint>";
             }
+        }
+
+        static void VerifyMSLR(MenuScreenLevelRushComplete __instance)
+        {
+            __instance.timeText.spriteAsset = SpriteAsset;
+            __instance.timeText.text += $" <sprite={(prevVerified ? 1 : 0)} tint>";
         }
     }
 }

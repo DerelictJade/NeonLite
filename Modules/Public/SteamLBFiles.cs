@@ -24,7 +24,7 @@ namespace NeonLite.Modules
             Global
         }
 
-        public delegate string LBWriteFunc(BinaryWriter writer, LBType type);
+        public delegate string LBWriteFunc(BinaryWriter writer, LBType type, bool sameScore);
         public delegate void LBLoadFunc(BinaryReader reader, LeaderboardScore score);
 
         public static event LBWriteFunc OnLBWrite;
@@ -96,9 +96,6 @@ namespace NeonLite.Modules
             if (bIOFailure || (pCallback.m_bSuccess == 0 && !DEBUG) || skip)
                 return true;
 
-            if (pCallback.m_bScoreChanged == 0 && !DEBUG)
-                return true;
-
             var list = OnLBWrite?.GetInvocationList();
 
             if (list == null)
@@ -135,7 +132,7 @@ namespace NeonLite.Modules
 
                 {
                     using BinaryWriter writer = new(file, Encoding.UTF8, true);
-                    filename = dg.Invoke(writer, type);
+                    filename = dg.Invoke(writer, type, pCallback.m_bScoreChanged == 0);
 
                     if (filename == null)
                         continue;
