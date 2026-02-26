@@ -91,10 +91,16 @@ namespace NeonLite.Modules
         internal static MelonPreferences_Entry<bool> hideLeaderboard;
         public static MelonPreferences_Entry<float> hueShift;
         internal static MelonPreferences_Entry<string> overrideURL;
+        internal static MelonPreferences_Entry<bool> uploadGlobal;
+        public static MelonPreferences_Entry<bool> showExtendedGlobal;
         internal static MelonPreferences_Entry<bool> showSapphPlusInLB;
 
         public static Material HueShiftMat { get; private set; } = null;
         static Material defaultMat;
+
+#if !XBOX
+        const string LB_FILE = "nl_commedal";
+#endif
 
         static void Setup()
         {
@@ -103,7 +109,9 @@ namespace NeonLite.Modules
             oldStyle = Settings.Add(Settings.h, "Medals", "oldStyle", "Stamp Style", "Display the community medals in the level info as it was pre-3.0.0.", false);
             hideOld = Settings.Add(Settings.h, "Medals", "hideOld", "Hide Times", "Hides unachieved medal times.", false);
             hideLeaderboard = Settings.Add(Settings.h, "Medals", "hideLeaderboard", "Hide Leaderboard Medals", "Unachieved medals will appear the same as your own on the leaderboards.", false);
+            uploadGlobal = Settings.Add(Settings.h, "Medals", "uploadGlobal", "Upload to Global", "Whether to upload your medal data to global. This uploads all your level medals for other mods to potentially look at. Works with extended medals.", true);
             overrideURL = Settings.Add(Settings.h, "Medals", "overrideURL", "Extension URL", "Specifies additional community medals JSON URL to apply on top of the existing community medals.", "");
+            showExtendedGlobal = Settings.Add(Settings.h, "Medals", "showExtendedGlobal", "Show Extended Medals on Global", "Show other people's extended medals on the global leaderboard, even if you don't have them yourself.", false);
             showSapphPlusInLB = Settings.Add(Settings.h, "Medals", "showSapphPlusInLB", "Show Sapph+ Medals in LB", "Enable to display medals above sapphre in the level leaderboards and not only in your local time.", false);
 
             active = setting.SetupForModule(Activate, static (_, after) => after);
@@ -111,6 +119,10 @@ namespace NeonLite.Modules
             overrideURL.OnEntryValueChanged.Subscribe(static (_, after) => RefetchMedals());
 
             NeonLite.OnBundleLoad += AssetsDone;
+#if !XBOX
+            SteamLBFiles.OnLBWrite += OnSteamLBWrite;
+            SteamLBFiles.RegisterForLoad(LB_FILE, OnSteamLBRead);
+#endif
         }
 
         static bool Load(string js)
@@ -125,7 +137,7 @@ namespace NeonLite.Modules
                     if (level == null)
                         continue;
 
-                    List<long> community = [.. (pk.Value as ProxyArray)];
+                    List<long> community = [.. pk.Value as ProxyArray];
                     while (community.Count < 4)
                         community.Add(long.MinValue);
 
@@ -173,7 +185,7 @@ namespace NeonLite.Modules
         {
             var stats = GameDataManager.GetLevelStats(level);
             if (!stats.GetCompleted())
-                return 0;
+                return -1;
 
             if (time == -1)
                 time = stats._timeBestMicroseconds;
@@ -685,5 +697,222 @@ namespace NeonLite.Modules
                 list[list.Count - 2] += str;
             __instance.levelComplete_Localized.textMeshProUGUI.text = string.Join("", list);
         }
+
+#if !XBOX
+        // file spec:
+        // - byte: version
+        // - byte[121]: level status (-1 for incomplete medal index otherwise)
+        // - byte[bronze through amethyst]: count per medal
+        // - bytebool: any further medals past saph
+        // - byte: saph or saph+ count
+        // if any further medals past saph: // it's arranged this way to make reading easier
+        //   - byte: real saph count
+        //   - for each further medal:
+        //     - byte index (to match with level status table)
+        //     - RRGGBB 3 byte color
+        //     - byte count
+        // a very innefficient filespec alignment wise but sizewise very compressed
+
+
+        static string OnSteamLBWrite(BinaryWriter writer, SteamLBFiles.LBType type, bool _)
+        {
+            if (type != SteamLBFiles.LBType.Global || !uploadGlobal.Value)
+                return null;
+            writer.Write((byte)1); // VERSION
+
+            Dictionary<int, byte> medalCounts = [];
+
+            // print out all levels
+            foreach (CampaignData campaign in NeonLite.Game.GetGameData().campaigns)
+            {
+                if (!Enum.IsDefined(typeof(CampaignData.CampaignType), campaign.campaignType))
+                    continue;
+                foreach (MissionData mission in campaign.missionData)
+                {
+                    if (!Enum.IsDefined(typeof(MissionData.MissionType), mission.missionType))
+                        continue;
+                    if (mission.missionID.Contains("GREEN")) // ignore that shit
+                        continue;
+                    foreach (LevelData level in mission.levels)
+                    {
+                        var m = GetMedalIndex(level.levelID);
+                        if (!medalCounts.TryGetValue(m, out var c))
+                            c = 0;
+                        medalCounts[m] = ++c;
+
+                        writer.Write((byte)m);
+                    }
+                }
+            }
+
+            // write all except pre-saph
+            for (int i = -1; i < I(MedalEnum.Sapphire); ++i)
+            {
+                if (!medalCounts.TryGetValue(i, out var c))
+                    c = 0;
+
+                NeonLite.Logger.BetaMsg($"Medal UGC: Write {E(i)} {(int)c}");
+                writer.Write(c);
+            }
+
+            // handle saph+ special
+            bool anyOver = medalCounts.Any(kv => kv.Key > I(MedalEnum.Sapphire));
+            writer.Write(anyOver);
+
+            var saphpl = medalCounts.Where(kv => kv.Key >= I(MedalEnum.Sapphire)).Sum(kv => kv.Value);
+            NeonLite.Logger.BetaMsg($"Medal UGC: Sapphire+ {saphpl}");
+
+            writer.Write((byte)saphpl);
+
+            if (anyOver)
+            {
+                // if we have any medals over saph, here's wherw we handle
+
+                // write the ones that are ACTUALLY just saph
+                if (!medalCounts.TryGetValue(I(MedalEnum.Sapphire), out var c))
+                    c = 0;
+
+                NeonLite.Logger.BetaMsg($"Medal UGC: Just Sapphire {(int)c}");
+
+                writer.Write(c);
+
+                // write bonus medals
+                for (int i = I(MedalEnum.Sapphire) + 1; i <= medalCounts.Max(kv => kv.Key); ++i)
+                {
+                    if (!medalCounts.ContainsKey(i))
+                        continue;
+                    writer.Write((byte)i); // write the index for future use
+
+                    // write they color
+                    var col = Colors[i]; // this better be in there
+
+                    writer.Write((byte)(col.r * 255));
+                    writer.Write((byte)(col.g * 255));
+                    writer.Write((byte)(col.b * 255));
+
+                    writer.Write(medalCounts[i]);
+                }
+            }
+
+            return LB_FILE;
+        }
+
+        static void OnSteamLBRead(BinaryReader reader, int length, LeaderboardScore score)
+        {
+            var ver = reader.ReadByte();
+
+            List<(Color, int)> medals = [];
+
+            switch (ver)
+            {
+                default:
+                    NeonLite.Logger.Error($"Unknown community medal UGC version {ver}");
+                    return;
+                case 1:
+                    {
+                        const int LEVEL_COUNT = 121;
+                        // that's right we're gonna cheat (do nothing w this, there for other mods)
+                        reader.ReadBytes(LEVEL_COUNT);
+
+                        // first, read any we haven't completed
+                        reader.ReadByte(); // i haven't decided if im doing anything with this value
+
+                        // read nonsaphs
+                        for (int i = 0; i < I(MedalEnum.Sapphire); ++i)
+                            medals.Add((Colors[i], reader.ReadByte()));
+
+                        var anyOver = reader.ReadBoolean();
+
+                        if (anyOver && showExtendedGlobal.Value)
+                        {
+                            // alright we got the CrAAAAYZ shit
+                            // skip the combined saph byte
+                            reader.ReadByte();
+
+                            // read the solo saph byte
+                            var count = reader.ReadByte();
+                            medals.Add((Colors[I(MedalEnum.Sapphire)], count));
+                            NeonLite.Logger.BetaMsg($"Medal UGC: Read just saph {count}");
+
+                            while (reader.BaseStream.Position < length)
+                            {
+                                var index = reader.ReadByte(); //index, we do nothing with
+                                NeonLite.Logger.BetaMsg($"Medal UGC: Read index {index}");
+
+                                var col = new Color32(reader.ReadByte(), reader.ReadByte(), reader.ReadByte(), 0xFF);
+                                NeonLite.Logger.BetaMsg($"Color? {col}");
+
+                                count = reader.ReadByte();
+                                NeonLite.Logger.BetaMsg($"Count? {count}");
+
+                                medals.Add((col, count));
+                            }
+                        }
+                        else
+                        {
+                            // read the combined byte and we're done
+                            medals.Add((Colors[I(MedalEnum.Sapphire)], reader.ReadByte()));
+                        }
+
+
+                        break;
+                    }
+            }
+
+            StringBuilder builder = new(); // we make the demon now
+            const string COLORED = "<size=175%><voffset=-0.07em>\u2022</voffset></size><size=50%> </size>";
+            const int MARGIN = 15;
+
+            medals.Reverse();
+            foreach ((var color, var count) in medals)
+            {
+                if (count == 0)
+                    continue;
+
+                Color.RGBToHSV(color, out var h, out var s, out var v);
+                h -= hueShift.Value;
+                while (h < 0)
+                    h += 1;
+
+                s -= 0.1f;
+                v += 0.25f;
+
+                var cstr = ColorUtility.ToHtmlStringRGB(Color.HSVToRGB(h, s, v));
+
+                builder.Append($"<color=#{cstr}>{COLORED}</color>{count} ");
+            }
+
+            var tmp = Utils.InstantiateUI(score._scoreValue.gameObject, "MedalCount", score.transform).GetComponent<TextMeshProUGUI>();
+
+            tmp.rectTransform.pivot = new(1, 0.5f);
+            tmp.enableAutoSizing = false;
+            tmp.alignment = TextAlignmentOptions.MidlineRight;
+            tmp.richText = true;
+            tmp.text = builder.ToString();
+            tmp.fontSize = 17;
+            tmp.margin = new(0, 0, MARGIN, 0);
+
+            var username = score._username.rectTransform;
+            tmp.rectTransform.position = username.TransformPoint(new(username.rect.xMax, username.rect.center.y));
+
+            var csf = tmp.GetOrAddComponent<ContentSizeFitter>();
+            csf.horizontalFit = ContentSizeFitter.FitMode.PreferredSize;
+
+            LayoutRebuilder.ForceRebuildLayoutImmediate(tmp.rectTransform);
+
+            // it's disgusting math time
+
+            var tomove = tmp.rectTransform.rect.width + MARGIN;
+            var upivot = username.pivot.x;
+
+            var upos = username.localPosition;
+            upos.x -= tomove * upivot;
+            username.localPosition = upos;
+
+            var usize = username.sizeDelta;
+            usize.x -= tomove;
+            username.sizeDelta = usize;
+        }
+#endif
     }
 }

@@ -51,6 +51,7 @@ namespace NeonLite.Modules
 
             Patching.AddPatch(typeof(LevelInfo), "SetLevel", Helpers.HM(VerifyLI).SetPriority(Priority.Last), Patching.PatchTarget.Postfix);
             Patching.AddPatch(typeof(MenuScreenResults), "OnSetVisible", Helpers.HM(VerifyMSR).SetPriority(Priority.Last), Patching.PatchTarget.Postfix);
+            Patching.AddPatch(typeof(MenuScreenLevelRushComplete), "OnSetVisible", Helpers.HM(VerifyMSLR).SetPriority(Priority.Last), Patching.PatchTarget.Postfix);
 
             PastSight.OnActive += OnPastSightActive;
 #if !XBOX
@@ -89,7 +90,18 @@ namespace NeonLite.Modules
         static void OnLevelWin()
         {
             if (LevelRush.IsLevelRush())
+            {
+                if (LevelRush.HasBeatenFinalLevelRushLevel_PreadvanceCheck())
+                {
+                    if (!PrintVerifications())
+                        NeonLite.Logger.Msg($"(Above log produced for rush clear)");
+
+                    prevVerified = Verified;
+                }
+                else
+                    otherRush.UnionWith(other);
                 return;
+            }
 
             var level = NeonLite.Game.GetCurrentLevel();
             if (!level)
@@ -110,14 +122,16 @@ namespace NeonLite.Modules
         }
 
         static bool wasVerified;
-        static void OnLevelLoad(LevelData level)
+        static void OnLevelLoad(LevelData _)
         {
             wasVerified = Verified;
             if (!fetched)
                 GetModList(false);
 
-            if (level)
-                CheckVerifications(CheckVStatus.Other);
+            if (!LevelRush.IsLevelRush() || LevelRush.GetCurrentLevelRushTimerMicroseconds() <= 0)
+                otherRush.Clear();
+
+            CheckVerifications(CheckVStatus.Other);
         }
 
         class ModInfo(string n, SemVersion ver)
@@ -193,6 +207,28 @@ namespace NeonLite.Modules
 
         static readonly Dictionary<MelonAssembly, Func<string>> addedAssemblies = [];
 
+        static readonly List<string> unknown = [];
+        static readonly List<(ModInfo, SemVersion)> outdated = [];
+        static readonly HashSet<string> other = [];
+        static readonly HashSet<string> otherRush = [];
+
+        static void AddToOther(string s)
+        {
+            NeonLite.Logger.BetaMsg($"Unverifiable status added: {s}");
+            if (LevelRush.IsLevelRush())
+            {
+                var level = LevelRush.GetCurrentLevelRushLevelData();
+
+                string lname = LocalizationManager.GetTranslation(level.GetLevelDisplayName());
+                if (string.IsNullOrEmpty(lname))
+                    lname = level.levelDisplayName;
+
+                other.Add($"{s} ({lname})");
+                return;
+            }
+            other.Add(s);
+        }
+
         /// <summary>
         /// Checked on level and game startup.
         /// </summary>
@@ -206,17 +242,51 @@ namespace NeonLite.Modules
 
 
         /// <summary>
-        /// Can be ran at any time to set the **current run** to be unverifiable.
+        /// Can be ran at any time to set the **current run** to be unverifiable, using a melon assembly
         /// </summary>
         public static void SetRunUnverifiable(MelonAssembly assembly, string status)
         {
             if (string.IsNullOrWhiteSpace(status))
                 return;
 
-            other.Add($"{assembly.Assembly.GetName().Name}: {status}");
+            AddToOther($"{assembly.Assembly.GetName().Name}: {status}");
+            SetVerified(false);
+        }
+        /// <summary>
+        /// Can be ran at any time to set the **current run** to be unverifiable, using a module type
+        /// </summary>
+        public static void SetRunUnverifiable(Type module, string status)
+        {
+            if (string.IsNullOrWhiteSpace(status))
+                return;
+
+            AddToOther($"{module.Assembly.GetName().Name} {module.Name}: {status}");
             SetVerified(false);
         }
 
+
+        /// <summary>
+        /// Can be ran at any time to set the **current rush** to be unverifiable, using a melon assembly
+        /// </summary>
+        public static void SetRushUnverifiable(MelonAssembly assembly, string status)
+        {
+            if (string.IsNullOrWhiteSpace(status))
+                return;
+
+            otherRush.Add($"{assembly.Assembly.GetName().Name}: {status}");
+            SetVerified(false);
+        }
+        /// <summary>
+        /// Can be ran at any time to set the **current rush** to be unverifiable, using a module type
+        /// </summary>
+        public static void SetRushUnverifiable(Type module, string status)
+        {
+            if (string.IsNullOrWhiteSpace(status))
+                return;
+
+            otherRush.Add($"{module.Assembly.GetName().Name} {module.Name}: {status}");
+            SetVerified(false);
+        }
 
         [Flags]
         internal enum CheckVStatus
@@ -224,10 +294,6 @@ namespace NeonLite.Modules
             Mods = 1 << 0,
             Other = 1 << 1
         }
-
-        static readonly List<string> unknown = [];
-        static readonly List<(ModInfo, SemVersion)> outdated = [];
-        static readonly List<string> other = [];
 
         internal static bool CheckVerifications(CheckVStatus check, bool print = false)
         {
@@ -261,7 +327,6 @@ namespace NeonLite.Modules
 
                 if (check.HasFlag(CheckVStatus.Other))
                 {
-
                     foreach (var kv in modules)
                     {
                         var module = kv.Key;
@@ -287,12 +352,7 @@ namespace NeonLite.Modules
                                 ok = true;
 
                             if (!ok)
-                            {
-                                if (ret.GetType() == typeof(string))
-                                    other.Add($"{module.Assembly.GetName().Name}: {ret}");
-                                else
-                                    other.Add($"{module.Assembly.GetName().Name}: Module {module} returned unverifiable.");
-                            }
+                                AddToOther($"{module.Assembly.GetName().Name} {module.Name}: {ret}");
                         }
                         catch (Exception e)
                         {
@@ -310,16 +370,15 @@ namespace NeonLite.Modules
 
                         var response = kv.Value();
                         if (!string.IsNullOrWhiteSpace(response))
-                            other.Add($"{kv.Key.Assembly.GetName().Name}: {kv.Value}");
+                            AddToOther($"{kv.Key.Assembly.GetName().Name}: {kv.Value}");
                     }
                 }
 
-                if (force.Value && !other.Contains("FORCE UNVERIFIED"))
-                {
-                    other.Add("FORCE UNVERIFIED");
-                }
+                const string FORCE = "Forced unverified";
+                if (force.Value && !other.Contains(FORCE))
+                    AddToOther(FORCE);
 
-                if (unknown.Any() || outdated.Any() || other.Any())
+                if (unknown.Any() || outdated.Any() || other.Any() || otherRush.Any())
                 {
                     // ohhhhhhhhhhh tough luck buddy
                     SetVerified(false);
@@ -366,7 +425,7 @@ namespace NeonLite.Modules
                     NeonLite.Logger.Warning($"  - {s.Item1.name} (expected at least {s.Item1.version}, is {s.Item2})");
             }
 
-            foreach (var s in other)
+            foreach (var s in other.Concat(otherRush))
                 NeonLite.Logger.Warning($"- {s}");
 
             NeonLite.Logger.Warning("!!! END VERIFICATION LOG !!!");
@@ -422,9 +481,9 @@ namespace NeonLite.Modules
 
 
 #if !XBOX
-        static string OnSteamLBWrite(BinaryWriter writer, SteamLBFiles.LBType type)
+        static string OnSteamLBWrite(BinaryWriter writer, SteamLBFiles.LBType type, bool _)
         {
-            if (type != SteamLBFiles.LBType.Level)
+            if (type == SteamLBFiles.LBType.Global)
                 return null;
             var semver = NeonLite.i.Info.SemanticVersion;
             writer.Write((byte)1); // VERSION
@@ -437,7 +496,7 @@ namespace NeonLite.Modules
             return LB_FILE;
         }
 
-        static void OnSteamLBRead(BinaryReader reader, LeaderboardScore score)
+        static void OnSteamLBRead(BinaryReader reader, int length, LeaderboardScore score)
         {
             var ver = reader.ReadByte();
 
@@ -482,6 +541,14 @@ namespace NeonLite.Modules
 
         static void VerifyMSR(MenuScreenResults __instance)
         {
+            if (LevelRush.IsLevelRush())
+            {
+                var nbT = __instance._levelCompleteStatsText;
+                nbT.spriteAsset = SpriteAsset;
+                nbT.text += $" <sprite={(prevVerified ? 1 : 0)} tint>";
+                return;
+            }
+
             LevelData level = NeonLite.Game.GetCurrentLevel();
             if (!level.StatsHasCustom(STATS_KEY))
                 return;
@@ -502,6 +569,12 @@ namespace NeonLite.Modules
                 nbT.spriteAsset = SpriteAsset;
                 nbT.text += $" <sprite={(stats.GetCustom<bool>(STATS_KEY) ? 1 : 0)} tint>";
             }
+        }
+
+        static void VerifyMSLR(MenuScreenLevelRushComplete __instance)
+        {
+            __instance.timeText.spriteAsset = SpriteAsset;
+            __instance.timeText.text += $" <sprite={(prevVerified ? 1 : 0)} tint>";
         }
     }
 }

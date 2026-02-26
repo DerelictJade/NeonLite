@@ -27,22 +27,10 @@ namespace NeonLite.Modules.UI
 
         static void Activate(bool activate)
         {
-            if (activate)
-            {
-                Patching.TogglePatch(activate, typeof(PlayerUI), "UpdateTimerText", OnTimerUpdate, Patching.PatchTarget.Prefix);
-                Patching.TogglePatch(activate, typeof(MenuScreenLevelRushComplete), "OnSetVisible", OnRushFinish, Patching.PatchTarget.Postfix);
-                Patching.TogglePatch(activate, typeof(MenuScreenResults), "OnSetVisible", OnLevelFinish, Patching.PatchTarget.Postfix);
-                Patching.TogglePatch(activate, typeof(Game), "GetTimerFormatted", GetTimerFormatted, Patching.PatchTarget.Prefix);
-                Patching.TogglePatch(activate, typeof(Game), "OnLevelWin", OnWin, Patching.PatchTarget.Prefix);
-            }
-            else
-            {
-                Patching.RemovePatch(typeof(PlayerUI), "UpdateTimerText", OnTimerUpdate);
-                Patching.RemovePatch(typeof(MenuScreenLevelRushComplete), "OnSetVisible", OnRushFinish);
-                Patching.RemovePatch(typeof(MenuScreenResults), "OnSetVisible", OnLevelFinish);
-                Patching.RemovePatch(typeof(Game), "GetTimerFormatted", GetTimerFormatted);
-                Patching.RemovePatch(typeof(Game), "OnLevelWin", OnWin);
-            }
+            Patching.TogglePatch(activate, typeof(PlayerUI), "UpdateTimerText", OnTimerUpdate, Patching.PatchTarget.Prefix);
+            Patching.TogglePatch(activate, typeof(MenuScreenResults), "OnSetVisible", OnLevelFinish, Patching.PatchTarget.Postfix);
+            Patching.TogglePatch(activate, typeof(Game), "GetTimerFormatted", GetTimerFormatted, Patching.PatchTarget.Prefix);
+            Patching.TogglePatch(activate, typeof(Game), "OnLevelWin", OnWin, Patching.PatchTarget.Prefix);
 
             active = activate;
         }
@@ -84,7 +72,6 @@ namespace NeonLite.Modules.UI
             __instance.timerText.text = FormatTimeNoArgs(NeonLite.Game.GetCurrentLevelTimerMicroseconds() / 1000);
             return false;
         }
-        static void OnRushFinish(MenuScreenLevelRushComplete __instance) => __instance.timeText.SetText(Helpers.FormatTime(LevelRush.GetCurrentLevelRushTimerMicroseconds() / 1000, true, '.', true));
         static void OnLevelFinish(MenuScreenResults __instance)
         {
             LevelData currentLevel = NeonLite.Game.GetCurrentLevel();
