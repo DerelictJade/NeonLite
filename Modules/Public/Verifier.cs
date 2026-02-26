@@ -130,8 +130,7 @@ namespace NeonLite.Modules
             if (!LevelRush.IsLevelRush() || LevelRush.GetCurrentLevelRushTimerMicroseconds() <= 0)
                 otherRush.Clear();
 
-            if (level)
-                CheckVerifications(CheckVStatus.Other);
+            CheckVerifications(CheckVStatus.Other);
         }
 
         class ModInfo(string n, SemVersion ver)
