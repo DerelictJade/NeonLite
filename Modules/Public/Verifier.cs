@@ -24,6 +24,9 @@ namespace NeonLite.Modules
         const string LB_FILE = "nl_verify";
 
         public static bool Verified { get; private set; }
+
+        public static event Action OnReset;
+
         static bool prevVerified;
         static MelonPreferences_Entry<bool> force;
 
@@ -173,8 +176,13 @@ namespace NeonLite.Modules
                 string line;
                 while ((line = reader.ReadLine()) != null)
                 {
-                    if (line.StartsWith("//") || string.IsNullOrWhiteSpace(line))
+                    line = line.Trim();
+                    if (line.StartsWith("//") || string.IsNullOrEmpty(line))
                         continue;
+
+                    if (line.Contains("//"))
+                        line = line.Substring(0, line.IndexOf("//"));
+
                     var split = line.Split();
 
                     if (split.Length > 1)
@@ -182,10 +190,10 @@ namespace NeonLite.Modules
                         if (SemVersion.TryParse(split.Last().Trim(), out var version))
                             verifiedMods.Add(new(string.Join(" ", split.Take(split.Length - 1)).Trim(), version));
                         else
-                            verifiedMods.Add(new(line.Trim(), null));
+                            verifiedMods.Add(new(line, null));
                     }
                     else
-                        verifiedMods.Add(new(line.Trim(), null));
+                        verifiedMods.Add(new(line, null));
                 }
             }
             catch
@@ -296,7 +304,10 @@ namespace NeonLite.Modules
             }
 
             if (check.HasFlag(CheckVStatus.Other))
+            {
+                OnReset?.Invoke();
                 other.Clear();
+            }
 
             try
             {
@@ -462,7 +473,7 @@ namespace NeonLite.Modules
 
         static void SetIcon()
         {
-            icon = StatusText.i.MakeText("verify", "<sprite=0 color=#FF8080><sprite=2 color=#000000AA>");
+            icon = StatusText.i.MakeText("verify", "<sprite=0 color=#FF8080><sprite=2 color=#000000AA>", 100);
             icon.alpha = 0;
             icon.transform.SetAsFirstSibling();
             icon.fontSize = 32;
@@ -473,16 +484,16 @@ namespace NeonLite.Modules
 
 
 #if !XBOX
-        static string OnSteamLBWrite(BinaryWriter writer, SteamLBFiles.LBType type, bool _)
+        static string OnSteamLBWrite(BinaryWriter writer, SteamLBFiles.LBType type, bool sameScore)
         {
-            if (type == SteamLBFiles.LBType.Global)
+            if (type == SteamLBFiles.LBType.Global || (type == SteamLBFiles.LBType.Rush && sameScore))
                 return null;
             var semver = NeonLite.i.Info.SemanticVersion;
             writer.Write((byte)1); // VERSION
             writer.Write((byte)semver.Major);
             writer.Write((byte)semver.Minor);
             writer.Write((byte)semver.Patch);
-            writer.Write(string.IsNullOrEmpty(semver.Build) ? (byte)0 : byte.Parse(semver.Build));
+            writer.Write(string.IsNullOrEmpty(semver.Build) ? (byte)0 : (byte)int.Parse(semver.Build));
             writer.Write(prevVerified);
 
             return LB_FILE;
@@ -507,8 +518,15 @@ namespace NeonLite.Modules
                     }
             }
 
-            score._scoreValue.spriteAsset = SpriteAsset;
-            score._scoreValue.text += $" <sprite={(verified ? 1 : 0)} tint>";
+
+            var scv = score._scoreValue;
+            scv.spriteAsset = SpriteAsset;
+
+            var pref = scv.GetPreferredValues().x;
+            scv.text += $" <sprite={(verified ? 1 : 0)} tint>";
+            scv.ForceMeshUpdate();
+
+            scv.rectTransform.ResizeWithPivot(new Vector2(scv.GetPreferredValues().x - pref, 0));
         }
 #endif
 
@@ -565,8 +583,21 @@ namespace NeonLite.Modules
 
         static void VerifyMSLR(MenuScreenLevelRushComplete __instance)
         {
-            __instance.timeText.spriteAsset = SpriteAsset;
-            __instance.timeText.text += $" <sprite={(prevVerified ? 1 : 0)} tint>";
+            if (__instance.bestTimeText.isActiveAndEnabled)
+            {
+                // add it to the new best test
+
+                var nb = __instance.bestTimeText;
+                nb.GetComponent<AxKLocalizedText>().Localize();
+                var nbT = nb.GetComponent<TextMeshProUGUI>();
+                nbT.spriteAsset = SpriteAsset;
+                nbT.text = $"<sprite={(prevVerified ? 1 : 0)} tint> " + nbT.text;
+            }
+            else
+            {
+                __instance.timeText.spriteAsset = SpriteAsset;
+                __instance.timeText.text = $"<sprite={(prevVerified ? 1 : 0)} tint> " + __instance.timeText.text;
+            }
         }
     }
 }

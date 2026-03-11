@@ -451,7 +451,7 @@ namespace NeonLite.Modules
 
             {
                 // pastsight compatibility
-                int pastSight = GetMedalIndex(level.levelID, levelStats.GetTimePastSight());
+                int pastSight = GetMedalIndex(level.levelID, levelStats.GetTimePastSight(true));
                 if (!level.isSidequest)
                     __instance._levelMedal.sprite = Medals[pastSight];
                 else
@@ -924,18 +924,8 @@ namespace NeonLite.Modules
 
             LayoutRebuilder.ForceRebuildLayoutImmediate(tmp.rectTransform);
 
-            // it's disgusting math time
-
             var tomove = tmp.rectTransform.rect.width + MARGIN;
-            var upivot = username.pivot.x;
-
-            var upos = username.localPosition;
-            upos.x -= tomove * upivot;
-            username.localPosition = upos;
-
-            var usize = username.sizeDelta;
-            usize.x -= tomove;
-            username.sizeDelta = usize;
+            username.ResizeWithPivot(new Vector2(-tomove, 0));
         }
 #endif
     }
