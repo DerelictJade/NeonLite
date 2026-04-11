@@ -19,6 +19,7 @@ stxticCustoms
 YourStory
 NeonSoundReplacer
 SecretShop
+GreenShop
 NeonCollate
 HeavenlyLoading
 ListPB
@@ -28,6 +29,8 @@ connie.modpack
 NoMoreNewFile
 HideLBNames
 NeonEraser
+NeonMenuCustomizer
+LBColours 1.0.2
 
 // The listed mods are not allowed, but correctly handle being enabled/disabled,
 // whether that be via Verifier.SetStatus or CheckVerifiable on a module, or will be eventually configured.
@@ -47,6 +50,7 @@ FullSync
 RMMBY
 PuppyPowertools
 NeonWhiteRP
+PBTimes
 
 // it's easier to keep this one in here
 UnityExplorer.ML.Mono
