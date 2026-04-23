@@ -7,7 +7,7 @@
             "popup": "NLEM/RESULTS_MEDAL_TOPAZ",
             "rank": 167,
             "color": "#f95700",
-            "stamp": true
+            "stamp": false
         },
         {
             "medali": "https://raw.githubusercontent.com/DerelictJade/NeonLite/main/Assets/Sprites/MedalBlud.png",
@@ -16,7 +16,7 @@
             "popup": "NLEM/RESULTS_MEDAL_BD",
             "rank": 169,
             "color": "#ff55fc",
-            "stamp": true
+            "stamp": false
         }
     ],
     "TUT_MOVEMENT": [
