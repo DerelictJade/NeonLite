@@ -7,7 +7,7 @@
             "popup": "NLEM/RESULTS_MEDAL_TOPAZ",
             "rank": 167,
             "color": "#f95700",
-            "stamp": false
+            "hidden": false
         }
     ],
     "TUT_MOVEMENT": [
