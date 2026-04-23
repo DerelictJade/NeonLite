@@ -1,4 +1,4 @@
-<Project>
+﻿<Project>
     <PropertyGroup>
         <!-- The name of the mod -->
         <NWName>NeonLite</NWName>
@@ -54,6 +54,7 @@
 
         <DefineConstants Condition="'$(Configuration)'=='Debug'">$(DefineConstants);ENABLE_PROFILER;</DefineConstants>
         <DefineConstants Condition="$(NWVersion.Contains('-b'))">$(DefineConstants);BETA;</DefineConstants>
+		<EmitCompilerGeneratedFiles>true</EmitCompilerGeneratedFiles>
     </PropertyGroup>
 
     <ItemGroup>
