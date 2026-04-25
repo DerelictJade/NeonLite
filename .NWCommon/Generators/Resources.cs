@@ -46,6 +46,7 @@ public class ResourcesCodeGenerator : ISourceGenerator
                         relative = string.Join(Path.DirectorySeparatorChar.ToString(),
                             relative.Split(Path.DirectorySeparatorChar).Skip(1));
                     }
+
                     if (!manifest.StartsWith(rootNamespace))
                         manifest = $"{rootNamespace}.{manifest}";
                     return (relative, manifest);
@@ -124,6 +125,8 @@ public class ResourcesCodeGenerator : ISourceGenerator
             resname = resname.Replace("+", "_");
             resname = resname.Replace("-", "_");
             resname = resname.Replace(".", "_");
+            resname = resname.Replace("+", "_");
+
             sb.AppendLine($"public readonly static Resource {resname} = new(\"{manifest}\");");
 
             prevFolder = dirname;
