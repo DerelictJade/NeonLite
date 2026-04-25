@@ -17,7 +17,7 @@ namespace NeonLite.Modules
     public static class SpeedrunCom
     {
         const bool priority = false;
-        const bool active = true;
+        const bool active = false;
 
         class Request(string path)
         {
