@@ -4,8 +4,20 @@ on:
   workflow_dispatch:
 
 jobs:
-  test:
+  update-medals:
     runs-on: ubuntu-latest
+
     steps:
-      - name: Test action
-        run: echo "working ~"
+      - name: Checkout repository
+        uses: actions/checkout@v6
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: pip install pandas
+
+      - name: Run medal update script
+        run: python scripts/update_medals.py
