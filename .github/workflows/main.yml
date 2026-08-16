@@ -3,6 +3,9 @@ name: Update Medal Times
 on:
   workflow_dispatch:
 
+permissions:
+  contents: write
+
 jobs:
   update-medals:
     runs-on: ubuntu-latest
@@ -21,3 +24,22 @@ jobs:
 
       - name: Run medal update script
         run: python scripts/update_medals.py
+
+      - name: Commit updated medal times
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          git add Resources/communitymedals.json
+          git add Resources/blood_diamond.json
+          git add Resources/topaz+bd.json
+          git add Resources/topaz2.json
+          git add Resources/bd2.json
+          git add Resources/topaz+bd2.json
+
+          if git diff --cached --quiet; then
+            echo "No medal times changed."
+          else
+            git commit -m "Update medal times"
+            git push
+          fi
