@@ -23,7 +23,7 @@
         8649999
     ],
     "TUT_JUMP": [
-        13799999
+        13849999
     ],
     "GRID_TUT_BALLOON": [
         14999999
@@ -59,7 +59,7 @@
         8929999
     ],
     "GRID_MEATY_BALLOONS": [
-        12699999
+        12749999
     ],
     "GRID_FAST_BALLOON": [
         21239999
@@ -92,7 +92,7 @@
         12999999
     ],
     "GRID_SPRINT": [
-        14699999
+        14749999
     ],
     "GRID_MOUNTAIN": [
         14299999
@@ -119,7 +119,7 @@
         9849999
     ],
     "GRID_HOPSCOTCH": [
-        10349999
+        10249999
     ],
     "GRID_BOOM": [
         14349999
@@ -161,7 +161,7 @@
         18499999
     ],
     "GRID_PREPARE": [
-        23199999
+        23099999
     ],
     "GRID_TRIPMAZE": [
         24999999
@@ -188,7 +188,7 @@
         8699999
     ],
     "GRID_MIMICPOP": [
-        16699999
+        16599999
     ],
     "GRID_SWARM": [
         7069999
@@ -221,7 +221,7 @@
         34599999
     ],
     "GRID_FIRECRACKER_2": [
-        25799999
+        25499999
     ],
     "GRID_SPIDERMAN": [
         18399999
@@ -230,7 +230,7 @@
         22799999
     ],
     "GRID_HEAT": [
-        21799999
+        21699999
     ],
     "GRID_BOLT": [
         21999999
@@ -245,7 +245,7 @@
         14199999
     ],
     "GRID_BARRAGE": [
-        24099999
+        23499999
     ],
     "GRID_1GUN": [
         26999999
@@ -302,13 +302,13 @@
         69999999
     ],
     "SIDEQUEST_OBSTACLE_PISTOL": [
-        13799999
+        13749999
     ],
     "SIDEQUEST_OBSTACLE_PISTOL_SHOOT": [
         23899999
     ],
     "SIDEQUEST_OBSTACLE_MACHINEGUN": [
-        25299999
+        24899999
     ],
     "SIDEQUEST_OBSTACLE_RIFLE_2": [
         11399999
@@ -317,7 +317,7 @@
         35399999
     ],
     "SIDEQUEST_OBSTACLE_SHOTGUN": [
-        32499999
+        32399999
     ],
     "SIDEQUEST_OBSTACLE_ROCKETLAUNCHER": [
         31599999
@@ -356,7 +356,7 @@
         19379999
     ],
     "SIDEQUEST_BARREL_CLIMB": [
-        14999999
+        14799999
     ],
     "SIDEQUEST_FISHERMAN_SUPLEX": [
         35599999
