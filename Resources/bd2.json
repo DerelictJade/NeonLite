@@ -29,7 +29,7 @@
         14849999
     ],
     "TUT_BOMB2": [
-        7949999
+        7899999
     ],
     "TUT_BOMBJUMP": [
         10299999
@@ -59,7 +59,7 @@
         8799999
     ],
     "GRID_MEATY_BALLOONS": [
-        12599999
+        12649999
     ],
     "GRID_FAST_BALLOON": [
         21149999
@@ -83,7 +83,7 @@
         10299999
     ],
     "GRID_DESCEND": [
-        8899999
+        8849999
     ],
     "GRID_STAMPEROUT": [
         9799999
@@ -116,10 +116,10 @@
         10399999
     ],
     "GRID_RINGER_EXPLORATION": [
-        9449999
+        9349999
     ],
     "GRID_HOPSCOTCH": [
-        10149999
+        9999999
     ],
     "GRID_BOOM": [
         13999999
@@ -128,7 +128,7 @@
         5699999
     ],
     "GRID_FLOCK": [
-        11199999
+        10999999
     ],
     "GRID_BOMBS_AHOY": [
         5549999
@@ -188,7 +188,7 @@
         8549999
     ],
     "GRID_MIMICPOP": [
-        16349999
+        16199999
     ],
     "GRID_SWARM": [
         6899999
@@ -206,10 +206,10 @@
         10799999
     ],
     "GRID_CLIMBANG": [
-        12599999
+        12699999
     ],
     "GRID_ROCKETUZI": [
-        32649999
+        31999999
     ],
     "GRID_CRASHLAND": [
         22999999
@@ -227,13 +227,13 @@
         17699999
     ],
     "GRID_DESTRUCTION": [
-        22299999
+        22499999
     ],
     "GRID_HEAT": [
         20999999
     ],
     "GRID_BOLT": [
-        20499999
+        20699999
     ],
     "GRID_PON": [
         20699999
@@ -302,13 +302,13 @@
         66499999
     ],
     "SIDEQUEST_OBSTACLE_PISTOL": [
-        13699999
+        13649999
     ],
     "SIDEQUEST_OBSTACLE_PISTOL_SHOOT": [
         23799999
     ],
     "SIDEQUEST_OBSTACLE_MACHINEGUN": [
-        24599999
+        23599999
     ],
     "SIDEQUEST_OBSTACLE_RIFLE_2": [
         11249999
@@ -350,7 +350,7 @@
         15999999
     ],
     "SIDEQUEST_SUNSET_FLIP_POWERBOMB": [
-        34999999
+        34799999
     ],
     "GRID_BALLOONLAIR": [
         19349999
@@ -359,7 +359,7 @@
         13999999
     ],
     "SIDEQUEST_FISHERMAN_SUPLEX": [
-        34999999
+        34699999
     ],
     "SIDEQUEST_STF": [
         14799999
